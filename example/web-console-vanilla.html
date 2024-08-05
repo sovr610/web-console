@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WebXR AR with A-Frame</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="./ar-class.js"></script>
+    <script src="./webConsole.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+          }
+          
+          .overlay-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000; /* Ensure the button is on top of the a-scene */
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+          }
+
+          .overlay-button-console {
+            position: absolute;
+            top: 10px;
+            left: 150px;
+            z-index: 1000; /* Ensure the button is on top of the a-scene */
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+          }
+
+          .text-version-info {
+            position: absolute;
+            bottom: 50px;
+            right: 10px;
+            z-index: 1000; /* Ensure the button is on top of the a-scene */
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+          }
+          
+          .overlay-button:hover {
+            background-color: #555;
+          }
+    </style>
+</head>
+<body>
+    <a-scene webxr="requiredFeatures: hit-test,local-floor,light-estimation,depth-sensing,dom-overlay,mesh-detection" ar-features>
+        <a-camera></a-camera>
+    </a-scene>
+    <label class="text-version-info">v0.0.0.3</label>
+    <button id="startAR" style="z-index:100" class="overlay-button">Start AR</button>
+    <button id="webConsoleToggle" style="z-index:100" class="overlay-button-console">Toggle Web Console</button>
+    <script>
+        const webConsole = new WebConsole();
+
+        webConsole.addCustomMessage('Performance', 'FPS: 60', { 
+            backgroundColor: '#4CAF50', 
+            color: '#fff', 
+            fontWeight: 'bold' 
+        });
+        webConsole.addCustomMessage('Performance', 'Memory Usage: 50MB', { 
+            backgroundColor: '#2196F3', 
+            color: '#fff', 
+            fontStyle: 'italic' 
+        });
+        
+        webConsole.addCustomTab('Network');
+        webConsole.AddCustomTab("aframe");
+        webConsole.addCustomMessage('Network', 'GET request: /api/data', { 
+            backgroundColor: '#FFC107', 
+            color: '#000', 
+            border: '1px solid #FFA000' 
+        });
+        webConsole.addCustomMessage('Network', 'POST request: /api/update', { 
+            backgroundColor: '#FF5722', 
+            color: '#fff', 
+            textDecoration: 'underline' 
+        });
+
+        ['Tab1', 'Tab2', 'Tab3', 'Tab4', 'Tab5', 'Tab6', 'Tab7', 'Tab8'].forEach(tab => {
+            webConsole.addCustomTab(tab);
+            webConsole.addCustomMessage(tab, `This is ${tab}`, {
+                backgroundColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+                color: '#fff'
+            });
+        });
+
+        document.getElementById('webConsoleToggle').addEventListener('click', () => {
+            webConsole.toggle();
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            const scene = document.querySelector('a-scene');
+            const arSession = new WebXRAR(scene);
+            
+            arSession.setDepthDataCallback((depthInfo) => {
+                console.log('Depth data received:', depthInfo);
+                // Process depth data here
+            });
+        
+            arSession.setMeshDataCallback((meshes) => {
+                console.log('Mesh data received:', meshes);
+                // Process mesh data here
+            });
+        
+            document.getElementById('startAR').addEventListener('click', async () => {
+                try {
+                    await arSession.startARSession();
+                    console.log('AR session started');
+                } catch (error) {
+                    console.error('Failed to start AR session:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
