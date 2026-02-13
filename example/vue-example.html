@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>WebConsole – Vue 3 Example</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f11;
+            color: #e4e4e7;
+            min-height: 100vh;
+            padding: 20px 16px 340px;
+        }
+        header { text-align: center; padding: 24px 0 16px; }
+        header h1 {
+            font-size: clamp(18px, 5vw, 26px);
+            font-weight: 700;
+            background: linear-gradient(135deg, #42b883, #35495e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header p { color: #71717a; font-size: 13px; margin-top: 6px; }
+
+        .card {
+            max-width: 520px;
+            margin: 16px auto;
+            padding: 16px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #a1a1aa;
+        }
+        .card code {
+            background: #27272a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #e4e4e7;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            max-width: 520px;
+            margin: 16px auto;
+        }
+        .demo-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 8px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            color: #d4d4d8;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .demo-btn:active { transform: scale(.96); }
+        .demo-btn:hover { background: #27272a; }
+        .demo-btn .icon { font-size: 20px; }
+
+        .section-label {
+            max-width: 520px;
+            margin: 20px auto 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #52525b;
+            padding-left: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>&#x1F343; Vue 3 + WebConsole</h1>
+    <p>Vue 3 Composition API wrapper demo</p>
+</header>
+
+<div class="card">
+    This page loads the vanilla <code>WebConsole</code> bundle, then creates a Vue 3 app
+    with an inline component that mirrors the built <code>&lt;WebConsole /&gt;</code> wrapper.
+    The component exposes methods via <code>defineExpose</code> and emits a <code>ready</code> event.
+</div>
+
+<div id="vue-app"></div>
+
+<!-- 1. Vanilla WebConsole (attaches window.WebConsole) -->
+<script src="../src/new-webConsole.js"></script>
+
+<!-- 2. Vue 3 from CDN -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<!-- 3. Vue app -->
+<script>
+    const { createApp, ref, onMounted, onUnmounted, watch, defineComponent } = Vue;
+
+    // ── Inline wrapper (mirrors the built .vue component) ───────
+    const WebConsoleComp = defineComponent({
+        name: 'WebConsole',
+        props: {
+            containerId: { type: String, default: 'web-console' },
+            visible: { type: Boolean, default: true }
+        },
+        emits: ['ready'],
+        setup(props, { emit, expose }) {
+            const instance = ref(null);
+
+            onMounted(() => {
+                const WC = window.WebConsole;
+                if (!WC) { console.error('[Vue] WebConsole not found'); return; }
+                instance.value = new WC(props.containerId);
+                if (!props.visible) instance.value.hide();
+                emit('ready', instance.value);
+            });
+
+            onUnmounted(() => {
+                instance.value?.destroy();
+                instance.value = null;
+            });
+
+            watch(() => props.visible, (v) => {
+                if (!instance.value) return;
+                v ? instance.value.show() : instance.value.hide();
+            });
+
+            const api = {
+                show: () => instance.value?.show(),
+                hide: () => instance.value?.hide(),
+                toggle: () => instance.value?.toggle(),
+                clearConsole: () => instance.value?.clearConsole(),
+                addCustomTab: (n) => instance.value?.addCustomTab(n),
+                addCustomMessage: (t, m, s) => instance.value?.addCustomMessage(t, m, s),
+                instance
+            };
+            expose(api);
+            return { ...api };
+        },
+        template: '<!-- vanilla manages DOM -->'
+    });
+
+    // ── Demo App ────────────────────────────────────────────────
+    const App = defineComponent({
+        components: { WebConsoleComp },
+        setup() {
+            const wcRef = ref(null);
+            const wc = ref(null);
+
+            function onReady(inst) {
+                wc.value = inst;
+                console.info('[Vue] WebConsole mounted via Vue wrapper ✓');
+            }
+
+            return { wcRef, wc, onReady };
+        },
+        template: `
+            <WebConsoleComp ref="wcRef" @ready="onReady" />
+
+            <div class="section-label">Console output</div>
+            <div class="demo-grid">
+                <button class="demo-btn" @click="() => console.log('Bonjour from Vue!', { framework: 'Vue', version: 3 })">
+                    <span class="icon">&#x1F4AC;</span> Log
+                </button>
+                <button class="demo-btn" @click="() => console.warn('Composition API: reactive ref unwrapped in template')">
+                    <span class="icon">&#x26A0;&#xFE0F;</span> Warn
+                </button>
+                <button class="demo-btn" @click="() => console.error('[Vue warn]: Failed to resolve component <MissingComp>')">
+                    <span class="icon">&#x1F6A8;</span> Error
+                </button>
+                <button class="demo-btn" @click="() => console.info('Vue devtools: 8 components, 3 routes, Pinia store active')">
+                    <span class="icon">&#x2139;&#xFE0F;</span> Info
+                </button>
+            </div>
+
+            <div class="section-label">Structured data</div>
+            <div class="demo-grid">
+                <button class="demo-btn" @click="() => console.log('Reactive state:', {
+                    user: { name: 'Alice', role: 'editor' },
+                    todos: [
+                        { id: 1, text: 'Write tests', done: true },
+                        { id: 2, text: 'Deploy to prod', done: false },
+                        { id: 3, text: 'Update docs', done: false }
+                    ],
+                    ui: { sidebar: true, theme: 'dark', locale: 'en-US' }
+                })">
+                    <span class="icon">&#x1F4E6;</span> Reactive state
+                </button>
+                <button class="demo-btn" @click="() => console.log('Router:', {
+                    current: { path: '/dashboard', name: 'Dashboard', params: {} },
+                    history: ['/login', '/dashboard', '/settings'],
+                    guards: { beforeEach: 2, afterEach: 1 }
+                })">
+                    <span class="icon">&#x1F5FA;</span> Router log
+                </button>
+            </div>
+
+            <div class="section-label">Component API</div>
+            <div class="demo-grid">
+                <button class="demo-btn" @click="() => {
+                    if (!wc) return;
+                    wc.addCustomTab('Vue');
+                    wc.addCustomMessage('Vue', '🍃 Composition API — setup() ran in 2.4 ms', { color: '#42b883', fontWeight: 'bold' });
+                    wc.addCustomMessage('Vue', '📦 Pinia stores: userStore, cartStore, settingsStore', { color: '#a1a1aa' });
+                    wc.addCustomMessage('Vue', '🔄 Watchers: 3 active, 0 stopped', { color: '#cca700' });
+                    wc.addCustomMessage('Vue', '🧩 Provided keys: theme, i18n, router', { color: '#3794ff' });
+                    console.info('Custom \\'Vue\\' tab created →');
+                }">
+                    <span class="icon">&#x2795;</span> Custom tab
+                </button>
+                <button class="demo-btn" @click="() => wc?.toggle()">
+                    <span class="icon">&#x1F441;</span> Toggle
+                </button>
+                <button class="demo-btn" @click="() => wc?.clearConsole()">
+                    <span class="icon">&#x1F9F9;</span> Clear
+                </button>
+            </div>
+
+            <div class="section-label">Network</div>
+            <div class="demo-grid">
+                <button class="demo-btn" @click="() => {
+                    fetch('https://jsonplaceholder.typicode.com/todos?_limit=5')
+                        .then(r => r.json())
+                        .then(todos => console.log('Fetched todos:', todos))
+                        .catch(err => console.error('Fetch failed:', err));
+                }">
+                    <span class="icon">&#x1F310;</span> Fetch todos
+                </button>
+                <button class="demo-btn" @click="() => {
+                    fetch('https://jsonplaceholder.typicode.com/posts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: 'Vue example', body: 'Sent from Vue wrapper demo', userId: 1 })
+                    })
+                    .then(r => r.json())
+                    .then(data => console.log('POST response:', data))
+                    .catch(err => console.error('POST failed:', err));
+                }">
+                    <span class="icon">&#x1F4E8;</span> POST data
+                </button>
+            </div>
+        `
+    });
+
+    createApp(App).mount('#vue-app');
+</script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>WebConsole – Solid.js Example</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f11;
+            color: #e4e4e7;
+            min-height: 100vh;
+            padding: 20px 16px 340px;
+        }
+        header { text-align: center; padding: 24px 0 16px; }
+        header h1 {
+            font-size: clamp(18px, 5vw, 26px);
+            font-weight: 700;
+            background: linear-gradient(135deg, #2c4f7c, #446b9e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header p { color: #71717a; font-size: 13px; margin-top: 6px; }
+
+        .card {
+            max-width: 520px;
+            margin: 16px auto;
+            padding: 16px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #a1a1aa;
+        }
+        .card code {
+            background: #27272a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #e4e4e7;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            max-width: 520px;
+            margin: 16px auto;
+        }
+        .demo-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 8px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            color: #d4d4d8;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .demo-btn:active { transform: scale(.96); }
+        .demo-btn:hover { background: #27272a; }
+        .demo-btn .icon { font-size: 20px; }
+
+        .section-label {
+            max-width: 520px;
+            margin: 20px auto 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #52525b;
+            padding-left: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>&#x1F48E; Solid.js + WebConsole</h1>
+    <p>Solid.js fine-grained reactive wrapper demo</p>
+</header>
+
+<div class="card">
+    Solid.js uses JSX compilation for optimal performance. This demo uses the vanilla
+    <code>WebConsole</code> to showcase the patterns the compiled
+    <code>&lt;WebConsole /&gt;</code> Solid wrapper provides &mdash; signals, effects,
+    memos, and resources. Build the real component with <code>npm&nbsp;run&nbsp;build:solid</code>.
+</div>
+
+<!-- 1. Vanilla WebConsole (attaches window.WebConsole) -->
+<script src="../src/new-webConsole.js"></script>
+
+<!-- 2. Demo app — simulates Solid.js reactivity patterns -->
+<script>
+    // ── Simulate Solid.js onMount ───────────────────────────────
+    const wc = new WebConsole('web-console');
+    console.info('[Solid] WebConsole mounted via Solid lifecycle ✓');
+
+    // ── Solid-themed helpers ─────────────────────────────────────
+
+    // Simulates createSignal
+    function createSignal(initial) {
+        let value = initial;
+        const listeners = new Set();
+        const getter = () => value;
+        const setter = (next) => {
+            value = typeof next === 'function' ? next(value) : next;
+            listeners.forEach(fn => fn(value));
+        };
+        getter.subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
+        return [getter, setter];
+    }
+
+    // Simulates createMemo
+    function createMemo(fn) {
+        return () => fn();
+    }
+
+    // Demo signals
+    const [count, setCount] = createSignal(0);
+    const [user, setUser] = createSignal({ name: 'Alex', role: 'dev' });
+    const [items, setItems] = createSignal([
+        { id: 1, label: 'Setup Solid project', status: 'done' },
+        { id: 2, label: 'Create WebConsole wrapper', status: 'done' },
+        { id: 3, label: 'Add fine-grained reactivity', status: 'pending' }
+    ]);
+
+    // Demo memo
+    const doubleCount = createMemo(() => count() * 2);
+    const doneCount = createMemo(() => items().filter(i => i.status === 'done').length);
+</script>
+
+<div class="section-label">Signals (createSignal)</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="
+        setCount(c => c + 1);
+        console.log('count() signal:', count(), '| doubled memo:', doubleCount());
+    ">
+        <span class="icon">&#x1F522;</span> count()++
+    </button>
+    <button class="demo-btn" onclick="
+        const roles = ['dev', 'designer', 'pm', 'qa'];
+        const next = roles[(roles.indexOf(user().role) + 1) % roles.length];
+        setUser({ ...user(), role: next });
+        console.log('user() signal:', user());
+    ">
+        <span class="icon">&#x1F464;</span> Update user()
+    </button>
+    <button class="demo-btn" onclick="
+        console.log('items() signal:', items());
+        console.log('Memos → done:', doneCount(), '| total:', items().length);
+    ">
+        <span class="icon">&#x1F4CB;</span> Log items()
+    </button>
+    <button class="demo-btn" onclick="
+        setItems(prev => prev.map(i => ({ ...i, status: i.status === 'done' ? 'pending' : 'done' })));
+        console.log('Toggled item statuses:', items());
+    ">
+        <span class="icon">&#x1F504;</span> Toggle status
+    </button>
+</div>
+
+<div class="section-label">Effects &amp; lifecycle</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="
+        console.log('createEffect triggered:', {
+            track: 'count()',
+            value: count(),
+            derived: { doubled: doubleCount(), isEven: count() % 2 === 0 },
+            note: 'Solid effects run synchronously on signal change'
+        });
+    ">
+        <span class="icon">&#x26A1;</span> createEffect
+    </button>
+    <button class="demo-btn" onclick="
+        console.log('onMount:', {
+            component: '<WebConsole>',
+            props: { containerId: 'web-console', visible: true },
+            renderTime: performance.now().toFixed(1) + 'ms',
+            note: 'Runs once after initial render — no deps needed'
+        });
+    ">
+        <span class="icon">&#x1F680;</span> onMount
+    </button>
+    <button class="demo-btn" onclick="
+        console.warn('onCleanup:', {
+            resources: ['WebConsole instance', 'signal subscriptions'],
+            note: 'Called when owner scope is disposed',
+            owner: 'App root'
+        });
+    ">
+        <span class="icon">&#x1F9F9;</span> onCleanup
+    </button>
+    <button class="demo-btn" onclick="
+        console.log('batch() — batched updates:', {
+            before: { count: count(), user: user().role },
+            note: 'Solid batches by default — all signal writes in a listener are batched'
+        });
+        setCount(c => c + 10);
+        setUser({ ...user(), name: 'Batched-' + user().name });
+        console.log('after batch:', { count: count(), user: user() });
+    ">
+        <span class="icon">&#x1F4E6;</span> batch()
+    </button>
+</div>
+
+<div class="section-label">Resources &amp; stores</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="
+        console.log('createResource (simulated):', {
+            state: 'loading', data: null, error: null
+        });
+        fetch('https://jsonplaceholder.typicode.com/users/1')
+            .then(r => r.json())
+            .then(data => {
+                console.log('createResource resolved:', {
+                    state: 'ready',
+                    data: data,
+                    error: null,
+                    refetch: 'available'
+                });
+            })
+            .catch(err => {
+                console.error('createResource error:', { state: 'errored', error: err.message });
+            });
+    ">
+        <span class="icon">&#x1F4E1;</span> createResource
+    </button>
+    <button class="demo-btn" onclick="
+        console.log('createStore (simulated):', {
+            store: {
+                user: { name: 'Alex', preferences: { theme: 'dark', lang: 'en' } },
+                notifications: [
+                    { id: 1, text: 'Welcome!', read: true },
+                    { id: 2, text: 'New feature available', read: false }
+                ]
+            },
+            note: 'Solid stores use proxies for nested fine-grained reactivity'
+        });
+    ">
+        <span class="icon">&#x1F4BE;</span> createStore
+    </button>
+    <button class="demo-btn" onclick="
+        console.log('produce() — Immer-style store update:', {
+            path: 'store.notifications[1].read',
+            from: false,
+            to: true,
+            note: 'Mutative updates via produce() helper'
+        });
+    ">
+        <span class="icon">&#x270F;&#xFE0F;</span> produce()
+    </button>
+    <button class="demo-btn" onclick="
+        console.log('reconcile() — diff-based update:', {
+            strategy: 'key-based',
+            added: 1,
+            removed: 0,
+            updated: 2,
+            note: 'Efficient store reconciliation'
+        });
+    ">
+        <span class="icon">&#x1F500;</span> reconcile()
+    </button>
+</div>
+
+<div class="section-label">Component API</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="
+        wc.addCustomTab('Solid');
+        wc.addCustomMessage('Solid', '💎 Component rendered in 0.8ms (no VDOM)', { color: '#446b9e', fontWeight: 'bold' });
+        wc.addCustomMessage('Solid', '📡 Signals: count, user, items (3 active)', { color: '#a1a1aa' });
+        wc.addCustomMessage('Solid', '⚡ Effects: 2 tracking, 0 disposed', { color: '#cca700' });
+        wc.addCustomMessage('Solid', '📦 Resources: 1 idle, 0 loading', { color: '#3794ff' });
+        console.info('Custom Solid tab created →');
+    ">
+        <span class="icon">&#x2795;</span> Custom tab
+    </button>
+    <button class="demo-btn" onclick="wc.toggle()">
+        <span class="icon">&#x1F441;</span> Toggle
+    </button>
+    <button class="demo-btn" onclick="wc.clearConsole()">
+        <span class="icon">&#x1F9F9;</span> Clear
+    </button>
+</div>
+
+<div class="section-label">Network</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="
+        fetch('https://jsonplaceholder.typicode.com/comments?_limit=5')
+            .then(r => r.json())
+            .then(data => console.log('Fetched comments:', data))
+            .catch(err => console.error('Fetch failed:', err));
+    ">
+        <span class="icon">&#x1F310;</span> Fetch comments
+    </button>
+    <button class="demo-btn" onclick="
+        fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: 'Solid post', body: 'From Solid.js wrapper demo', userId: 1 })
+        })
+        .then(r => r.json())
+        .then(data => console.log('POST response:', data))
+        .catch(err => console.error('POST failed:', err));
+    ">
+        <span class="icon">&#x1F4E8;</span> POST data
+    </button>
+</div>
+
+</body>
+</html>

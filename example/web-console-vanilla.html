@@ -1,105 +1,327 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>WebXR AR with A-Frame</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>WebConsole – Mobile DevTools Demo</title>
     <script src="../src/new-webConsole.js"></script>
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-          }
-          
-          .overlay-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1000; /* Ensure the button is on top of the a-scene */
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #333;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-          }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-          .overlay-button-console {
-            position: absolute;
-            top: 10px;
-            left: 150px;
-            z-index: 1000; /* Ensure the button is on top of the a-scene */
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #333;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-          }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f11;
+            color: #e4e4e7;
+            min-height: 100vh;
+            padding: 16px;
+            padding-bottom: 340px; /* room for the console */
+        }
 
-          .text-version-info {
-            position: absolute;
-            bottom: 50px;
-            right: 10px;
-            z-index: 1000; /* Ensure the button is on top of the a-scene */
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #333;
-            color: white;
-            border: none;
-            border-radius: 5px;
+        header {
+            text-align: center;
+            padding: 24px 0 20px;
+        }
+        header h1 {
+            font-size: clamp(20px, 5vw, 28px);
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header p {
+            color: #71717a;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        .demo-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 8px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            color: #d4d4d8;
+            font-size: 13px;
+            font-family: inherit;
             cursor: pointer;
-          }
-          
-          .overlay-button:hover {
-            background-color: #555;
-          }
+            transition: background .15s, border-color .15s, transform .1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .demo-btn:active { transform: scale(.96); }
+        .demo-btn:hover { background: #27272a; border-color: #3f3f46; }
+        .demo-btn .icon { font-size: 22px; }
+
+        .section-label {
+            max-width: 600px;
+            margin: 20px auto 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #52525b;
+            padding-left: 4px;
+        }
+
+        .info-card {
+            max-width: 600px;
+            margin: 0 auto 14px;
+            padding: 14px 16px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #a1a1aa;
+        }
+        .info-card code {
+            background: #27272a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #e4e4e7;
+        }
     </style>
 </head>
 <body>
-    <a-scene webxr="requiredFeatures: hit-test,local-floor,light-estimation,depth-sensing,dom-overlay,mesh-detection" ar-features>
-        <a-camera></a-camera>
-    </a-scene>
-    <label class="text-version-info">v0.0.0.3</label>
-    <button id="startAR" style="z-index:100" class="overlay-button">Start AR</button>
-    <button id="webConsoleToggle" style="z-index:100" class="overlay-button-console">Toggle Web Console</button>
-    <script>
-        const webConsole = new WebConsole();
 
+<header>
+    <h1>&#x1F6E0; WebConsole</h1>
+    <p>Mobile-first developer tools — tap any button below</p>
+</header>
 
+<!-- ─── Info Card ──────────────────────────────────── -->
+<div class="info-card">
+    The console panel is docked at the bottom of the screen. Drag the top handle to resize,
+    swipe down to hide, or tap the floating <strong>&#x1F41E;</strong> button to reopen.
+    Try the <strong>REPL</strong> input at the bottom of the Console tab to evaluate live JavaScript.
+</div>
 
-        document.getElementById('webConsoleToggle').addEventListener('click', () => {
-            webConsole.toggle();
+<!-- ─── Console Logging ───────────────────────────── -->
+<div class="section-label">Console output</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="demoLog()">
+        <span class="icon">&#x1F4AC;</span> console.log
+    </button>
+    <button class="demo-btn" onclick="demoWarn()">
+        <span class="icon">&#x26A0;&#xFE0F;</span> console.warn
+    </button>
+    <button class="demo-btn" onclick="demoError()">
+        <span class="icon">&#x1F6A8;</span> console.error
+    </button>
+    <button class="demo-btn" onclick="demoInfo()">
+        <span class="icon">&#x2139;&#xFE0F;</span> console.info
+    </button>
+</div>
+
+<!-- ─── Object + Data Types ───────────────────────── -->
+<div class="section-label">Structured data</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="demoObject()">
+        <span class="icon">&#x1F4E6;</span> Objects
+    </button>
+    <button class="demo-btn" onclick="demoArray()">
+        <span class="icon">&#x1F4DA;</span> Arrays
+    </button>
+    <button class="demo-btn" onclick="demoNestedTree()">
+        <span class="icon">&#x1F333;</span> Nested tree
+    </button>
+    <button class="demo-btn" onclick="demoPrimitives()">
+        <span class="icon">&#x1F522;</span> Primitives
+    </button>
+</div>
+
+<!-- ─── Network ───────────────────────────────────── -->
+<div class="section-label">Network requests</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="demoFetchOk()">
+        <span class="icon">&#x2705;</span> Fetch 200
+    </button>
+    <button class="demo-btn" onclick="demoFetch404()">
+        <span class="icon">&#x274C;</span> Fetch 404
+    </button>
+    <button class="demo-btn" onclick="demoXHR()">
+        <span class="icon">&#x1F4E1;</span> XHR GET
+    </button>
+    <button class="demo-btn" onclick="demoFetchPost()">
+        <span class="icon">&#x1F4E8;</span> POST JSON
+    </button>
+</div>
+
+<!-- ─── Custom Tabs & Advanced ────────────────────── -->
+<div class="section-label">Advanced features</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="demoCustomTab()">
+        <span class="icon">&#x2795;</span> Custom tab
+    </button>
+    <button class="demo-btn" onclick="demoStressTest()">
+        <span class="icon">&#x26A1;</span> Stress test
+    </button>
+    <button class="demo-btn" onclick="demoErrorStack()">
+        <span class="icon">&#x1F4A5;</span> Stack trace
+    </button>
+    <button class="demo-btn" onclick="demoClear()">
+        <span class="icon">&#x1F9F9;</span> Clear logs
+    </button>
+</div>
+
+<script>
+    // ── Initialise the console ──────────────────────────
+    const wc = new WebConsole();
+
+    // ── Console output demos ────────────────────────────
+    function demoLog() {
+        console.log('Hello from WebConsole!');
+        console.log('Multiple args:', 42, true, null, undefined);
+        console.log('Formatted string — time is', new Date().toLocaleTimeString());
+    }
+
+    function demoWarn() {
+        console.warn('Deprecation: use `.start()` instead of `.init()`');
+        console.warn('Memory usage is above 80%', { heapUsed: '156 MB', limit: '192 MB' });
+    }
+
+    function demoError() {
+        console.error('Failed to load resource: 404 Not Found');
+        console.error('TypeError:', new TypeError('Cannot read property "x" of undefined'));
+    }
+
+    function demoInfo() {
+        console.info('App version 2.4.1 — build 20260213');
+        console.info('Service Worker registered, scope:', '/app/');
+    }
+
+    // ── Structured data demos ───────────────────────────
+    function demoObject() {
+        console.log('User object:', {
+            id: 1001,
+            name: 'Jane Doe',
+            email: 'jane@example.com',
+            roles: ['admin', 'editor'],
+            preferences: { theme: 'dark', lang: 'en-US', notifications: true }
         });
-        document.addEventListener('DOMContentLoaded', () => {
-            const scene = document.querySelector('a-scene');
-            const arSession = new WebXRAR(scene);
-            
-            arSession.setDepthDataCallback((depthInfo) => {
-                console.log('Depth data received:', depthInfo);
-                // Process depth data here
-            });
-        
-            arSession.setMeshDataCallback((meshes) => {
-                console.log('Mesh data received:', meshes);
-                // Process mesh data here
-            });
-        
-            document.getElementById('startAR').addEventListener('click', async () => {
-                try {
-                    await arSession.startARSession();
-                    console.log('AR session started');
-                } catch (error) {
-                    console.error('Failed to start AR session:', error);
-                }
-            });
+    }
+
+    function demoArray() {
+        console.log('Fibonacci:', [1, 1, 2, 3, 5, 8, 13, 21, 34, 55]);
+        console.log('Mixed array:', ['text', 42, false, null, { key: 'val' }, [1, 2, 3]]);
+    }
+
+    function demoNestedTree() {
+        console.log('Config tree:', {
+            server: {
+                host: '0.0.0.0',
+                port: 8080,
+                ssl: { enabled: true, cert: '/etc/ssl/cert.pem', key: '/etc/ssl/key.pem' }
+            },
+            database: {
+                primary: { host: 'db-1.local', port: 5432, pool: { min: 2, max: 10 } },
+                replica: { host: 'db-2.local', port: 5432, readonly: true }
+            },
+            logging: { level: 'info', transports: ['console', 'file'], file: { path: '/var/log/app.log', rotate: '7d' } }
         });
-    </script>
+    }
+
+    function demoPrimitives() {
+        console.log('String:', 'hello world');
+        console.log('Number:', 3.14159);
+        console.log('Boolean:', true, false);
+        console.log('Null:', null);
+        console.log('Undefined:', undefined);
+        console.log('BigInt:', BigInt(9007199254740991));
+        console.log('Symbol:', Symbol('mySymbol'));
+    }
+
+    // ── Network demos ───────────────────────────────────
+    function demoFetchOk() {
+        fetch('https://jsonplaceholder.typicode.com/posts/1')
+            .then(r => r.json())
+            .then(data => console.log('Fetch result:', data))
+            .catch(err => console.error('Fetch failed:', err));
+    }
+
+    function demoFetch404() {
+        fetch('https://jsonplaceholder.typicode.com/posts/99999')
+            .then(r => {
+                console.log('Response status:', r.status, r.statusText);
+                return r.json();
+            })
+            .catch(err => console.error('Fetch error:', err));
+    }
+
+    function demoXHR() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://jsonplaceholder.typicode.com/users/1');
+        xhr.onload = () => console.log('XHR response:', JSON.parse(xhr.responseText));
+        xhr.onerror = () => console.error('XHR failed');
+        xhr.send();
+    }
+
+    function demoFetchPost() {
+        fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: 'WebConsole test', body: 'Sent from the mobile DevTools demo', userId: 1 })
+        })
+        .then(r => r.json())
+        .then(data => console.log('POST response:', data))
+        .catch(err => console.error('POST failed:', err));
+    }
+
+    // ── Advanced feature demos ──────────────────────────
+    function demoCustomTab() {
+        wc.addCustomTab('Metrics');
+        wc.addCustomMessage('Metrics', '⏱ First Contentful Paint: 420 ms', {
+            color: '#89d185', fontWeight: 'bold'
+        });
+        wc.addCustomMessage('Metrics', '📦 Bundle size: 41.4 KB (gzip: 12.8 KB)', {
+            color: '#cca700'
+        });
+        wc.addCustomMessage('Metrics', '🔋 Battery: 72% — charging', {
+            color: '#3794ff'
+        });
+        wc.addCustomMessage('Metrics', '📶 Connection: 4G — RTT 50 ms, downlink 10 Mbps', {
+            color: '#d4d4d4'
+        });
+        console.info('Custom "Metrics" tab created — check the tab bar →');
+    }
+
+    function demoStressTest() {
+        const start = performance.now();
+        for (let i = 0; i < 100; i++) {
+            console.log(`[${String(i + 1).padStart(3, '0')}] Stress entry — timestamp: ${Date.now()}`);
+        }
+        const elapsed = (performance.now() - start).toFixed(1);
+        console.info(`Stress test done: 100 entries in ${elapsed} ms`);
+    }
+
+    function demoErrorStack() {
+        try {
+            (function outer() {
+                (function inner() {
+                    throw new Error('Something went wrong in the inner function');
+                })();
+            })();
+        } catch (e) {
+            console.error('Caught error:', e);
+            console.error('Stack trace:', e.stack);
+        }
+    }
+
+    function demoClear() {
+        wc.clearConsole();
+        console.info('Console cleared ✓');
+    }
+</script>
 </body>
 </html>

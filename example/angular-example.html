@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>WebConsole – Angular Example</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f11;
+            color: #e4e4e7;
+            min-height: 100vh;
+            padding: 20px 16px 340px;
+        }
+        header { text-align: center; padding: 24px 0 16px; }
+        header h1 {
+            font-size: clamp(18px, 5vw, 26px);
+            font-weight: 700;
+            background: linear-gradient(135deg, #dd0031, #c3002f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header p { color: #71717a; font-size: 13px; margin-top: 6px; }
+
+        .card {
+            max-width: 520px;
+            margin: 16px auto;
+            padding: 16px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #a1a1aa;
+        }
+        .card code {
+            background: #27272a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #e4e4e7;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            max-width: 520px;
+            margin: 16px auto;
+        }
+        .demo-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 8px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            color: #d4d4d8;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .demo-btn:active { transform: scale(.96); }
+        .demo-btn:hover { background: #27272a; }
+        .demo-btn .icon { font-size: 20px; }
+
+        .section-label {
+            max-width: 520px;
+            margin: 20px auto 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #52525b;
+            padding-left: 4px;
+        }
+
+        .note {
+            max-width: 520px;
+            margin: 24px auto;
+            padding: 14px 16px;
+            background: #1c1c22;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #a1a1aa;
+        }
+        .note strong { color: #e4e4e7; }
+        .note code {
+            background: #27272a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #e4e4e7;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>&#x1F171; Angular + WebConsole</h1>
+    <p>Angular 18 component wrapper demo</p>
+</header>
+
+<div class="card">
+    Since Angular requires a full build pipeline (AOT compilation, zones, etc.) it can't run
+    from a plain HTML file like React or Vue. This example demonstrates using the vanilla
+    <code>WebConsole</code> class directly — the same class the Angular wrapper delegates to —
+    with UI patterns that match how you'd interact with it in an Angular app.
+</div>
+
+<div class="card">
+    <strong>In a real Angular project:</strong><br><br>
+    <code>import { WebConsoleComponent } from 'web-console/angular';</code><br><br>
+    Template: <code>&lt;app-web-console [containerId]="'my-console'" [visible]="true" (ready)="onReady($event)"&gt;&lt;/app-web-console&gt;</code><br><br>
+    The component handles <code>ngOnInit</code> → create instance, <code>ngOnDestroy</code> → destroy,
+    and exposes <code>show()</code>, <code>hide()</code>, <code>toggle()</code>,
+    <code>clearConsole()</code>, <code>addCustomTab()</code>, <code>addCustomMessage()</code>.
+</div>
+
+<!-- ─── Console Logging ───────────────────────────────────── -->
+<div class="section-label">Console output (simulating Angular lifecycle)</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="demoNgOnInit()">
+        <span class="icon">&#x1F680;</span> ngOnInit
+    </button>
+    <button class="demo-btn" onclick="demoNgOnChanges()">
+        <span class="icon">&#x1F504;</span> ngOnChanges
+    </button>
+    <button class="demo-btn" onclick="demoNgOnDestroy()">
+        <span class="icon">&#x1F6D1;</span> ngOnDestroy
+    </button>
+    <button class="demo-btn" onclick="demoHttpClient()">
+        <span class="icon">&#x1F310;</span> HttpClient
+    </button>
+</div>
+
+<!-- ─── Structured Data ───────────────────────────────────── -->
+<div class="section-label">Angular-style structured data</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="demoInjector()">
+        <span class="icon">&#x1F489;</span> DI tree
+    </button>
+    <button class="demo-btn" onclick="demoRouter()">
+        <span class="icon">&#x1F5FA;</span> Router state
+    </button>
+    <button class="demo-btn" onclick="demoForms()">
+        <span class="icon">&#x1F4CB;</span> Form state
+    </button>
+    <button class="demo-btn" onclick="demoRxJS()">
+        <span class="icon">&#x1F4A0;</span> RxJS stream
+    </button>
+</div>
+
+<!-- ─── Advanced ──────────────────────────────────────────── -->
+<div class="section-label">Component API</div>
+<div class="demo-grid">
+    <button class="demo-btn" onclick="demoCustomTab()">
+        <span class="icon">&#x2795;</span> Custom tab
+    </button>
+    <button class="demo-btn" onclick="wc.toggle()">
+        <span class="icon">&#x1F441;</span> Toggle
+    </button>
+    <button class="demo-btn" onclick="wc.clearConsole()">
+        <span class="icon">&#x1F9F9;</span> Clear
+    </button>
+    <button class="demo-btn" onclick="demoZoneChange()">
+        <span class="icon">&#x26A1;</span> Zone.js sim
+    </button>
+</div>
+
+<!-- ─── Note about real Angular usage ─────────────────────── -->
+<div class="note">
+    <strong>Building the Angular wrapper:</strong><br>
+    <code>npm run build:angular</code> — produces <code>dist/angular-bundle.js</code> (UMD)<br><br>
+    In your Angular project, import the module:<br>
+    <code>imports: [WebConsoleModule]</code><br><br>
+    The wrapper handles lifecycle automatically. This demo page simulates the same
+    behaviour using the vanilla class directly.
+</div>
+
+<!-- 1. Vanilla WebConsole -->
+<script src="../src/new-webConsole.js"></script>
+
+<script>
+    // ── Simulate Angular component lifecycle ────────────────
+    const wc = new WebConsole();
+    console.info('[Angular Demo] WebConsole instantiated (simulating ngOnInit)');
+
+    function demoNgOnInit() {
+        console.info('[ngOnInit] Component initialised');
+        console.log('[ngOnInit] Injected services:', {
+            authService: { isAuthenticated: true, user: 'admin@example.com' },
+            configService: { apiUrl: 'https://api.example.com', env: 'production' },
+            loggerService: { level: 'info', transports: ['console', 'remote'] }
+        });
+        console.log('[ngOnInit] @Input() bindings resolved');
+    }
+
+    function demoNgOnChanges() {
+        console.warn('[ngOnChanges] SimpleChanges detected:');
+        console.log('[ngOnChanges] changes:', {
+            visible: { previousValue: true, currentValue: false, firstChange: false },
+            containerId: { previousValue: 'wc-1', currentValue: 'wc-2', firstChange: false }
+        });
+    }
+
+    function demoNgOnDestroy() {
+        console.info('[ngOnDestroy] Cleaning up subscriptions…');
+        console.log('[ngOnDestroy] Unsubscribed from 4 observables');
+        console.log('[ngOnDestroy] Destroyed 2 child components');
+        console.warn('[ngOnDestroy] WebConsole.destroy() called — DOM removed');
+    }
+
+    function demoHttpClient() {
+        console.info('[HttpClient] GET https://jsonplaceholder.typicode.com/albums');
+        fetch('https://jsonplaceholder.typicode.com/albums?_limit=5')
+            .then(r => r.json())
+            .then(albums => {
+                console.log('[HttpClient] Response:', albums);
+                console.info(`[HttpClient] ${albums.length} albums loaded — piped through map()`)
+            })
+            .catch(err => console.error('[HttpClient] Error:', err));
+    }
+
+    function demoInjector() {
+        console.log('[Injector] Dependency tree:', {
+            AppModule: {
+                providers: ['AuthService', 'ConfigService', 'LoggerService'],
+                imports: ['BrowserModule', 'HttpClientModule', 'RouterModule', 'WebConsoleModule'],
+                declarations: ['AppComponent', 'DashboardComponent', 'NavComponent']
+            },
+            LazyFeatureModule: {
+                providers: ['FeatureService'],
+                route: '/features',
+                loadChildren: '() => import(\'./features/features.module\')'
+            }
+        });
+    }
+
+    function demoRouter() {
+        console.log('[Router] Current state:', {
+            url: '/dashboard/analytics',
+            params: { section: 'analytics' },
+            queryParams: { range: '7d', compare: 'true' },
+            data: { title: 'Analytics Dashboard', requiresAuth: true },
+            outlet: 'primary',
+            children: [
+                { path: 'charts', component: 'ChartComponent' },
+                { path: 'tables', component: 'TableComponent' }
+            ]
+        });
+    }
+
+    function demoForms() {
+        console.log('[ReactiveForms] FormGroup state:', {
+            value: { name: 'Jane Doe', email: 'jane@example.com', role: 'admin' },
+            valid: true,
+            dirty: true,
+            touched: true,
+            controls: {
+                name: { valid: true, errors: null },
+                email: { valid: true, errors: null },
+                role: { valid: true, errors: null }
+            }
+        });
+        console.info('[ReactiveForms] Form submitted — dispatching action');
+    }
+
+    function demoRxJS() {
+        console.info('[RxJS] Simulating observable stream…');
+        let count = 0;
+        const id = setInterval(() => {
+            count++;
+            console.log(`[RxJS] emit #${count}:`, {
+                type: 'tick',
+                value: Math.floor(Math.random() * 100),
+                timestamp: Date.now()
+            });
+            if (count >= 5) {
+                clearInterval(id);
+                console.info('[RxJS] Observable completed after 5 emissions');
+            }
+        }, 600);
+    }
+
+    function demoCustomTab() {
+        wc.addCustomTab('Angular');
+        wc.addCustomMessage('Angular', '🅰️  Change detection: OnPush strategy', { color: '#dd0031', fontWeight: 'bold' });
+        wc.addCustomMessage('Angular', '📦 Lazy modules: 3 loaded, 2 pending', { color: '#a1a1aa' });
+        wc.addCustomMessage('Angular', '🔄 Zone.js: 12 microtasks, 4 macrotasks processed', { color: '#cca700' });
+        wc.addCustomMessage('Angular', '💉 Injected: AuthService, HttpClient, ActivatedRoute', { color: '#3794ff' });
+        console.info('Custom "Angular" tab created →');
+    }
+
+    function demoZoneChange() {
+        console.info('[Zone.js] Triggering change detection…');
+        const start = performance.now();
+        for (let i = 0; i < 50; i++) {
+            console.log(`[Zone.js] CD cycle ${i + 1}: ${(Math.random() * 2).toFixed(2)} ms`);
+        }
+        console.info(`[Zone.js] 50 change detection cycles in ${(performance.now() - start).toFixed(1)} ms`);
+    }
+</script>
+</body>
+</html>
